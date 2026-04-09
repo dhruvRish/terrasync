@@ -353,7 +353,7 @@ async function loadAll() {
   if (sensorRows && sensorRows.length) {
     sData = sensorRows.map(r => ({
   id:     r['id'],
-  sensor: r['sensor id'],
+  sensor: r['sensor'],
   ndsi:   parseFloat(r['NDSI']),
   ndvi:   parseFloat(r['NDVI']),
   si:     parseFloat(r['SI'])
