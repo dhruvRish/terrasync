@@ -352,11 +352,12 @@ async function loadAll() {
   const sensorRows = await fetchSheet(SHEETS.sensors);
   if (sensorRows && sensorRows.length) {
     sData = sensorRows.map(r => ({
-      id:   r['id'], sensor: r['sensor'],
-      ndsi: parseFloat(r['NDSI']),
-      ndvi: parseFloat(r['NDVI']),
-      si:   parseFloat(r['SI'])
-    }));
+  id:     r['id'],
+  sensor: r['sensor id'],
+  ndsi:   parseFloat(r['NDSI']),
+  ndvi:   parseFloat(r['NDVI']),
+  si:     parseFloat(r['SI'])
+}));
     anyLive = true;
   } else {
     sData = FB.sensors;
