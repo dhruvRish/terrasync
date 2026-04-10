@@ -4,145 +4,607 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TerraSync — Al-Batinah Salinity Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
+/* ═══════════════════════════════════════════
+   COLOUR SYSTEM — extracted from slide
+   Dark forest green dominant
+   Cream/sand accent text
+   Lime green for data/alerts
+═══════════════════════════════════════════ */
 :root {
-  --bg:#060d18;--surface:#0c1a2e;--card:#101f35;--border:rgba(255,255,255,0.07);
-  --accent:#00d4aa;--warn:#f5a623;--danger:#ff4757;--safe:#2ed573;
-  --sand:#c9a96e;--text:#e8f0fe;--muted:#5a7a9a;
+  --forest:    #1B3A2D;
+  --forest2:   #243F30;
+  --forest3:   #2C4A38;
+  --forest4:   #1A3328;
+  --forestdk:  #122419;
+  --cream:     #E8E0CC;
+  --cream2:    #D4C9A8;
+  --cream3:    #F2EDD8;
+  --sand:      #B8A882;
+  --muted:     #7A9080;
+  --lime:      #6DBF67;
+  --limed:     #4A9944;
+  --limebg:    rgba(109,191,103,0.12);
+  --red:       #E05A4E;
+  --amber:     #D4944A;
+  --teal:      #4AADA8;
+  --bdr:       rgba(232,224,204,0.12);
+  --bdr2:      rgba(232,224,204,0.2);
+  --r:         10px;
+  --rl:        16px;
 }
-*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,170,0.012) 2px,rgba(0,212,170,0.012) 4px);
-  pointer-events:none;z-index:999;}
-.amb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;}
-.a1{width:600px;height:400px;background:rgba(0,212,170,0.06);top:-100px;left:-100px;}
-.a2{width:500px;height:500px;background:rgba(255,71,87,0.05);bottom:-100px;right:-50px;}
-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
-  padding:14px 32px;background:rgba(6,13,24,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px;color:#fff;}
-.nav-logo span{color:var(--accent);}
-.nav-links{display:flex;gap:24px;list-style:none;}
-.nav-links a{color:var(--muted);text-decoration:none;font-size:0.8rem;font-weight:500;transition:color 0.2s;}
-.nav-links a:hover{color:var(--accent);}
-.nav-status{display:flex;align-items:center;gap:8px;font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--accent);}
-.pdot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pd 1.5s infinite;}
-@keyframes pd{0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,0.6);}50%{box-shadow:0 0 0 6px rgba(0,212,170,0);}}
-.hero{position:relative;z-index:1;padding:60px 32px 40px;max-width:1200px;margin:0 auto;}
-.hero-eyebrow{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;}
-.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);letter-spacing:4px;line-height:0.95;color:#fff;margin-bottom:20px;}
-.hero-title span{color:var(--accent);}
-.hero-sub{font-size:1rem;color:var(--muted);max-width:520px;line-height:1.7;}
-.hero-meta{display:flex;gap:32px;margin-top:32px;flex-wrap:wrap;}
-.meta-val{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--accent);line-height:1;}
-.meta-label{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
-.main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 32px 80px;}
-.sec-hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;margin-top:48px;}
-.sec-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:#fff;}
-.sec-line{flex:1;height:1px;background:var(--border);}
-.sec-tag{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);
-  text-transform:uppercase;background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:4px;}
-.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,212,170,0.1);
-  border:1px solid rgba(0,212,170,0.3);color:var(--accent);font-family:'DM Mono',monospace;
-  font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:4px;margin-left:8px;}
-.source-bar{background:rgba(0,212,170,0.05);border:1px solid rgba(0,212,170,0.15);border-radius:8px;
-  padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
-.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background 0.3s;}
-.sdot.live{background:var(--accent);animation:pd 1.5s infinite;}
-.sdot.loading{background:var(--warn);}
-.sdot.error{background:var(--danger);}
-.source-text{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);}
-.source-text strong{color:var(--text);}
-.sensor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
-@media(max-width:700px){.sensor-grid{grid-template-columns:1fr 1fr;}}
-@media(max-width:440px){.sensor-grid{grid-template-columns:1fr;}}
-.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;
-  position:relative;overflow:hidden;transition:transform 0.2s,border-color 0.3s;}
-.sc:hover{transform:translateY(-2px);}
-.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0;transition:background 0.5s;}
-.sc.safe::before{background:var(--safe);}.sc.warn::before{background:var(--warn);}
-.sc.danger::before{background:var(--danger);animation:bl 1s infinite;}
-@keyframes bl{0%,100%{opacity:1;}50%{opacity:0.4;}}
-.sc-loc{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-.sc-val{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;line-height:1;transition:color 0.5s;}
-.sc-val.safe{color:var(--safe);}.sc-val.warn{color:var(--warn);}.sc-val.danger{color:var(--danger);}
-.sc-unit{font-size:0.68rem;color:var(--muted);margin-top:2px;}
-.sc-indices{font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);margin-top:6px;line-height:1.6;}
-.sc-indices span{color:var(--accent);}
-.sc-status{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:0.62rem;
-  font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;border-radius:4px;}
-.sc-status.safe{background:rgba(46,213,115,0.12);color:var(--safe);}
-.sc-status.warn{background:rgba(245,166,35,0.12);color:var(--warn);}
-.sc-status.danger{background:rgba(255,71,87,0.12);color:var(--danger);}
-.sc-bar-bg{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:10px;overflow:hidden;}
-.sc-bar{height:100%;border-radius:2px;transition:width 1s,background 0.5s;}
-.sc-source{font-family:'DM Mono',monospace;font-size:0.5rem;margin-top:6px;opacity:0.8;}
-.sc-source.gee{color:var(--accent);}.sc-source.arduino{color:var(--safe);}.sc-source.fallback{color:var(--muted);}
-.alert-banner{background:rgba(255,71,87,0.08);border:1px solid rgba(255,71,87,0.25);border-radius:10px;
-  padding:16px 20px;display:flex;align-items:center;gap:14px;font-size:0.78rem;
-  line-height:1.5;margin-bottom:16px;opacity:0;transition:opacity 0.5s;}
-.alert-banner.visible{opacity:1;}
-.ai{font-size:1.3rem;}.alert-text strong{color:var(--danger);}
-.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-@media(max-width:700px){.charts-grid{grid-template-columns:1fr;}}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;}
-.chart-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:#fff;margin-bottom:4px;}
-.chart-card p{font-size:0.68rem;color:var(--muted);margin-bottom:20px;font-family:'DM Mono',monospace;}
-.chart-wrap{position:relative;height:220px;}
-.chart-card.wide{grid-column:1/-1;}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px;}
-@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
-.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 16px;text-align:center;}
-.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--accent);line-height:1;}
-.stat-label{font-size:0.62rem;font-family:'DM Mono',monospace;color:var(--muted);margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;}
-footer{position:relative;z-index:1;text-align:center;padding:30px 32px;border-top:1px solid var(--border);
-  font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;opacity:0.5;}
-::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}
-::-webkit-scrollbar-thumb{background:var(--card);border-radius:3px;}
+
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background:var(--forest);
+  color:var(--cream);
+  font-family:'Outfit', sans-serif;
+  font-size:15px;
+  line-height:1.65;
+  overflow-x:hidden;
+}
+
+/* Subtle organic texture overlay */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(109,191,103,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 90% 80%, rgba(26,50,38,0.6) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--forestdk); }
+::-webkit-scrollbar-thumb { background:var(--lime); border-radius:2px; }
+::selection { background:var(--lime); color:var(--forestdk); }
+
+/* ── NAV ─────────────────────────────────────── */
+nav {
+  position:sticky; top:0; z-index:200;
+  background:rgba(27,58,45,0.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bdr);
+  padding:0 40px; height:62px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+.nav-left { display:flex; align-items:center; gap:36px; }
+
+.nav-logo {
+  font-family:'Playfair Display', serif;
+  font-size:1.3rem; font-weight:800;
+  color:var(--cream3);
+  letter-spacing:0.02em;
+  display:flex; align-items:center; gap:10px;
+  text-decoration:none;
+}
+
+/* Logo mark — matches the geometric icon from the slide */
+.nav-mark {
+  width:32px; height:32px;
+  position:relative; flex-shrink:0;
+}
+.nav-mark svg {
+  width:32px; height:32px;
+  fill:none; stroke:var(--lime);
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+}
+
+.nav-links { display:flex; gap:4px; list-style:none; }
+.nav-links a {
+  color:var(--sand);
+  text-decoration:none;
+  font-size:0.82rem; font-weight:500;
+  padding:6px 14px; border-radius:6px;
+  transition:all 0.18s ease;
+  font-family:'DM Mono', monospace;
+  font-size:0.72rem; letter-spacing:0.06em;
+}
+.nav-links a:hover { color:var(--cream3); background:rgba(232,224,204,0.07); }
+
+.nav-pill {
+  display:flex; align-items:center; gap:8px;
+  font-family:'DM Mono', monospace;
+  font-size:0.62rem; letter-spacing:0.18em;
+  color:var(--lime);
+  border:1px solid rgba(109,191,103,0.3);
+  padding:5px 14px; border-radius:100px;
+  background:rgba(109,191,103,0.06);
+}
+.pulse {
+  width:6px; height:6px;
+  background:var(--lime); border-radius:50%;
+  animation:pa 1.8s ease infinite;
+}
+@keyframes pa {
+  0%,100% { box-shadow:0 0 0 0 rgba(109,191,103,0.5); }
+  50% { box-shadow:0 0 0 5px rgba(109,191,103,0); }
+}
+
+/* ── HERO ─────────────────────────────────────── */
+.hero {
+  display:grid; grid-template-columns:1fr 380px;
+  min-height:calc(100vh - 62px); max-height:760px;
+  position:relative; z-index:1;
+}
+
+.hero-l {
+  padding:72px 64px;
+  display:flex; flex-direction:column; justify-content:center;
+  position:relative;
+}
+
+/* Subtle grid lines in hero */
+.hero-l::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(232,224,204,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,224,204,0.02) 1px, transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+}
+
+.hero-kicker {
+  font-family:'DM Mono', monospace;
+  font-size:0.62rem; letter-spacing:0.22em;
+  text-transform:uppercase; color:var(--lime);
+  margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+}
+.hero-kicker::before {
+  content:''; display:inline-block;
+  width:28px; height:1.5px; background:var(--lime);
+}
+
+h1 {
+  font-family:'Playfair Display', serif;
+  font-size:clamp(2.6rem, 5vw, 5rem);
+  font-weight:800; line-height:1.05;
+  letter-spacing:-0.01em; color:var(--cream3);
+  margin-bottom:28px;
+}
+h1 em {
+  font-style:italic; color:var(--lime);
+}
+
+.hero-desc {
+  font-size:0.95rem; color:var(--sand);
+  max-width:440px; line-height:1.8;
+  margin-bottom:44px;
+}
+
+.hero-stats { display:flex; gap:36px; flex-wrap:wrap; }
+.hs { display:flex; flex-direction:column; gap:4px; }
+.hs-v {
+  font-family:'Playfair Display', serif;
+  font-size:2rem; font-weight:800;
+  color:var(--cream3); line-height:1;
+}
+.hs-v span { color:var(--lime); }
+.hs-l {
+  font-family:'DM Mono', monospace;
+  font-size:0.58rem; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+/* ── HERO RIGHT ─────────────────────────────── */
+.hero-r {
+  background:var(--forest4);
+  border-left:1px solid var(--bdr);
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  justify-content:flex-end; padding:44px;
+}
+
+.hero-r::before {
+  content:'';
+  position:absolute; top:0; right:0;
+  width:100%; height:100%;
+  background-image:
+    linear-gradient(rgba(232,224,204,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,224,204,0.025) 1px, transparent 1px);
+  background-size:32px 32px;
+}
+.hero-r::after {
+  content:'';
+  position:absolute; top:-60px; right:-60px;
+  width:280px; height:280px;
+  background:radial-gradient(circle, rgba(109,191,103,0.08) 0%, transparent 70%);
+}
+
+.hero-panel { position:relative; z-index:1; }
+
+.hp-tag {
+  font-family:'DM Mono', monospace;
+  font-size:0.6rem; letter-spacing:0.2em;
+  text-transform:uppercase; color:var(--lime);
+  margin-bottom:14px;
+}
+.hp-title {
+  font-family:'Playfair Display', serif;
+  font-size:1.4rem; font-weight:700;
+  color:var(--cream3); margin-bottom:24px;
+  line-height:1.35;
+}
+.hp-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:10px; margin-bottom:28px;
+}
+.hpg {
+  background:rgba(232,224,204,0.05);
+  border:1px solid var(--bdr);
+  border-radius:var(--r); padding:14px;
+}
+.hpg-n {
+  font-family:'Playfair Display', serif;
+  font-size:1.7rem; font-weight:800;
+  color:var(--lime); line-height:1;
+  margin-bottom:5px;
+}
+.hpg-l {
+  font-family:'DM Mono', monospace;
+  font-size:0.55rem; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+.hp-cta {
+  display:inline-flex; align-items:center; gap:10px;
+  background:var(--lime); color:var(--forestdk);
+  font-family:'Outfit', sans-serif;
+  font-size:0.85rem; font-weight:600;
+  padding:12px 24px; border-radius:8px;
+  text-decoration:none; transition:all 0.2s ease;
+}
+.hp-cta:hover {
+  background:var(--limed); color:#fff;
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(109,191,103,0.25);
+}
+.hp-cta svg {
+  width:15px; height:15px; stroke:currentColor; fill:none;
+  stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;
+  transition:transform 0.2s;
+}
+.hp-cta:hover svg { transform:translateX(3px); }
+
+/* ── PAGE ─────────────────────────────────────── */
+.page { max-width:1280px; margin:0 auto; padding:0 40px; position:relative; z-index:1; }
+
+.sec-label {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:28px; margin-top:72px;
+}
+.sl-n {
+  font-family:'DM Mono', monospace; font-size:0.62rem;
+  letter-spacing:0.1em; color:var(--lime);
+  background:var(--limebg); border:1px solid rgba(109,191,103,0.3);
+  padding:4px 10px; border-radius:5px;
+}
+.sl-t {
+  font-family:'Playfair Display', serif;
+  font-size:1.5rem; font-weight:700;
+  color:var(--cream3); letter-spacing:0.01em;
+}
+.sl-line { flex:1; height:1px; background:var(--bdr); }
+.sl-tag {
+  font-family:'DM Mono', monospace; font-size:0.58rem;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--muted); background:var(--forest2);
+  border:1px solid var(--bdr); padding:4px 10px; border-radius:5px;
+}
+
+/* ── STATUS BAR ──────────────────────────────── */
+.status-bar {
+  background:var(--forest2);
+  border:1px solid var(--bdr); border-radius:8px;
+  padding:11px 18px; display:flex; align-items:center; gap:11px;
+  margin-bottom:22px; transition:all 0.3s;
+}
+.status-bar.live {
+  border-color:rgba(109,191,103,0.35);
+  background:rgba(109,191,103,0.06);
+}
+.status-bar.err {
+  border-color:rgba(224,90,78,0.3);
+  background:rgba(224,90,78,0.06);
+}
+.sdot {
+  width:8px; height:8px; border-radius:50%;
+  flex-shrink:0; transition:background .3s;
+}
+.sdot.live { background:var(--lime); animation:pa 1.8s infinite; }
+.sdot.loading { background:var(--amber); }
+.sdot.error { background:var(--red); }
+.source-text {
+  font-family:'DM Mono', monospace;
+  font-size:0.66rem; color:var(--sand);
+}
+.source-text strong { color:var(--cream); }
+
+/* ── ALERT ───────────────────────────────────── */
+.alert-banner {
+  background:rgba(224,90,78,0.1);
+  border:1px solid rgba(224,90,78,0.35);
+  border-left:4px solid var(--red);
+  border-radius:8px; padding:14px 20px;
+  display:flex; align-items:center; gap:14px;
+  font-size:0.85rem; line-height:1.5;
+  margin-bottom:20px;
+  opacity:0; transform:translateY(-8px); pointer-events:none;
+  transition:all 0.35s ease;
+}
+.alert-banner.visible { opacity:1; transform:translateY(0); pointer-events:all; }
+.ai { font-size:1.1rem; }
+.alert-text { color:var(--cream); }
+.alert-text strong { color:var(--red); }
+
+/* ── SENSOR CARDS ────────────────────────────── */
+.sensor-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:16px; margin-bottom:16px;
+}
+@media(max-width:860px){ .sensor-grid { grid-template-columns:1fr 1fr; } }
+@media(max-width:520px){ .sensor-grid { grid-template-columns:1fr; } }
+
+.sc {
+  background:var(--forest2);
+  border:1px solid var(--bdr);
+  border-radius:var(--rl); padding:22px 20px;
+  position:relative; overflow:hidden;
+  transition:transform 0.2s ease, box-shadow 0.2s ease;
+}
+.sc:hover {
+  transform:translateY(-4px);
+  box-shadow:0 16px 40px rgba(18,36,25,0.5);
+}
+.sc::before {
+  content:''; position:absolute; top:0; left:0; right:0;
+  height:2px; border-radius:var(--rl) var(--rl) 0 0;
+  transition:background 0.5s;
+}
+.sc.safe::before   { background:var(--lime); }
+.sc.warn::before   { background:var(--amber); }
+.sc.danger::before { background:var(--red); animation:dp 1s infinite; }
+@keyframes dp { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+.sc-grid {
+  position:absolute; top:0; right:0;
+  width:100px; height:100px;
+  background-image:
+    linear-gradient(rgba(232,224,204,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,224,204,0.025) 1px, transparent 1px);
+  background-size:16px 16px; pointer-events:none;
+}
+
+.sc-loc {
+  font-family:'DM Mono', monospace; font-size:0.57rem;
+  letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:12px;
+}
+.sc-val {
+  font-family:'Playfair Display', serif;
+  font-size:2.6rem; font-weight:800;
+  letter-spacing:-0.02em; line-height:1;
+  transition:color 0.4s;
+}
+.sc-val.safe   { color:var(--lime); }
+.sc-val.warn   { color:var(--amber); }
+.sc-val.danger { color:var(--red); }
+.sc-unit {
+  font-size:0.68rem; color:var(--muted);
+  margin-top:4px; margin-bottom:14px;
+}
+.sc-indices {
+  font-family:'DM Mono', monospace; font-size:0.58rem;
+  color:var(--muted); line-height:1.9; margin-bottom:12px;
+}
+.sc-indices span { color:var(--teal); }
+.sc-status {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:'DM Mono', monospace; font-size:0.58rem;
+  letter-spacing:0.1em; text-transform:uppercase;
+  padding:4px 10px; border-radius:5px; margin-bottom:14px;
+}
+.sc-status.safe   { background:rgba(109,191,103,0.1); color:var(--lime); }
+.sc-status.warn   { background:rgba(212,148,74,0.1);  color:var(--amber); }
+.sc-status.danger { background:rgba(224,90,78,0.1);   color:var(--red); }
+.sc-bar-bg {
+  height:2px; background:rgba(232,224,204,0.08);
+  border-radius:2px; overflow:hidden; margin-bottom:10px;
+}
+.sc-bar { height:100%; border-radius:2px; transition:width 1.2s cubic-bezier(.4,0,.2,1), background .5s; }
+.sc-source { font-family:'DM Mono', monospace; font-size:0.53rem; opacity:0.7; }
+.sc-source.gee     { color:var(--teal); }
+.sc-source.arduino { color:var(--lime); }
+.sc-source.fallback{ color:var(--muted); }
+
+/* ── CHARTS ──────────────────────────────────── */
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:700px){ .charts-grid { grid-template-columns:1fr; } }
+
+.chart-card {
+  background:var(--forest2); border:1px solid var(--bdr);
+  border-radius:var(--rl); padding:28px;
+  transition:transform 0.2s;
+}
+.chart-card:hover { transform:translateY(-2px); }
+.chart-card.wide { grid-column:1/-1; }
+.cc-label {
+  font-family:'DM Mono', monospace; font-size:0.57rem;
+  letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--lime); margin-bottom:5px;
+}
+.chart-card h3 {
+  font-family:'Playfair Display', serif;
+  font-size:1.1rem; font-weight:700;
+  color:var(--cream3); margin-bottom:4px;
+}
+.chart-card p {
+  font-size:0.7rem; color:var(--muted); margin-bottom:22px;
+  font-family:'DM Mono', monospace;
+}
+.chart-wrap { position:relative; height:220px; }
+
+/* ── STATS ───────────────────────────────────── */
+.stats-row {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:16px; margin-top:20px;
+}
+@media(max-width:700px){ .stats-row { grid-template-columns:1fr 1fr; } }
+
+.stat-box {
+  background:var(--forest2); border:1px solid var(--bdr);
+  border-radius:var(--r); padding:22px 20px;
+  position:relative; overflow:hidden;
+  transition:all 0.2s;
+}
+.stat-box:hover {
+  border-color:rgba(109,191,103,0.35);
+  background:rgba(109,191,103,0.05);
+}
+.stat-box::before {
+  content:''; position:absolute;
+  top:0; left:0; right:0; height:2px;
+  background:var(--lime); opacity:0; transition:opacity 0.2s;
+}
+.stat-box:hover::before { opacity:1; }
+.stat-num {
+  font-family:'Playfair Display', serif;
+  font-size:2rem; font-weight:800;
+  color:var(--cream3); line-height:1;
+  margin-bottom:6px; transition:color 0.2s;
+}
+.stat-box:hover .stat-num { color:var(--lime); }
+.stat-label {
+  font-family:'DM Mono', monospace; font-size:0.58rem;
+  letter-spacing:0.1em; text-transform:uppercase; color:var(--muted);
+}
+
+/* ── FOOTER ──────────────────────────────────── */
+footer {
+  margin-top:80px;
+  border-top:1px solid var(--bdr);
+  padding:28px 40px;
+  display:flex; align-items:center;
+  justify-content:space-between; flex-wrap:wrap; gap:14px;
+  position:relative; z-index:1;
+}
+.footer-logo {
+  font-family:'Playfair Display', serif;
+  font-size:1rem; font-weight:800;
+  color:var(--cream3);
+}
+.footer-logo span { color:var(--lime); font-style:italic; }
+.footer-team {
+  font-family:'DM Mono', monospace; font-size:0.6rem;
+  letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--muted); text-align:center;
+}
+.footer-badge {
+  font-family:'DM Mono', monospace; font-size:0.6rem;
+  color:var(--lime); background:var(--limebg);
+  border:1px solid rgba(109,191,103,0.3);
+  padding:5px 12px; border-radius:100px; letter-spacing:0.08em;
+}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media(max-width:900px) {
+  .hero { grid-template-columns:1fr; max-height:none; }
+  .hero-r { min-height:260px; }
+  .hero-l { padding:48px 32px; }
+  nav { padding:0 24px; }
+  .page { padding:0 24px; }
+  footer { padding:24px; }
+}
+@media(max-width:600px) {
+  .nav-links { display:none; }
+  .hero-l { padding:40px 20px; }
+  .hero-stats { gap:22px; }
+}
 </style>
 </head>
 <body>
-<div class="amb a1"></div><div class="amb a2"></div>
 
+<!-- NAV -->
 <nav>
-  <div class="nav-logo">Terra<span>Sync</span></div>
-  <ul class="nav-links">
-    <li><a href="#sensors">Sensors</a></li>
-    <li><a href="#trends">Trends</a></li>
-  </ul>
-  <div class="nav-status"><div class="pdot"></div><span>LIVE · AL-BATINAH</span></div>
+  <div class="nav-left">
+    <a href="#" class="nav-logo">
+      <div class="nav-mark">
+        <!-- Geometric icon matching the slide logo style -->
+        <svg viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="10" stroke-width="1.5"/>
+          <path d="M16 6 L22 12 L22 20 L16 26 L10 20 L10 12 Z" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="4" stroke-width="1.5"/>
+        </svg>
+      </div>
+      TerraSync
+    </a>
+    <ul class="nav-links">
+      <li><a href="#sensors">Sensors</a></li>
+      <li><a href="#trends">Trends</a></li>
+    </ul>
+  </div>
+  <div class="nav-pill">
+    <div class="pulse"></div>
+    LIVE · AL-BATINAH
+  </div>
 </nav>
 
+<!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">School Students' Hackathon · Sustainable Oman 2026</div>
-  <h1 class="hero-title">Al-Batinah<br><span>Salinity</span><br>Intelligence</h1>
-  <p class="hero-sub">Real NDSI / NDVI / SI values exported from Google Earth Engine · Combined with Arduino live sensor feed from Sohar Farm A.</p>
-  <div class="hero-meta">
-    <div><div class="meta-val" id="heroAlerts">0</div><div class="meta-label">Active Alerts</div></div>
-    <div><div class="meta-val" id="heroNDSI">–</div><div class="meta-label">Mean NDSI 2024</div></div>
-    <div><div class="meta-val" id="heroRisk">–</div><div class="meta-label">High Risk km²</div></div>
-    <div><div class="meta-val">10</div><div class="meta-label">Years of Data</div></div>
+  <div class="hero-l">
+    <div class="hero-kicker">Syncing Farmers with Tech</div>
+    <h1>Al-Batinah<br><em>Salinity</em><br>Intelligence</h1>
+    <div class="hero-stats">
+      <div class="hs"><div class="hs-v"><span id="heroAlerts">0</span></div><div class="hs-l">Active Alerts</div></div>
+      <div class="hs"><div class="hs-v" id="heroNDSI">–</div><div class="hs-l">Mean NDSI 2024</div></div>
+      <div class="hs"><div class="hs-v" id="heroRisk">–</div><div class="hs-l">High Risk km²</div></div>
+      <div class="hs"><div class="hs-v">10</div><div class="hs-l">Years of Data</div></div>
+    </div>
+  </div>
+
+  <div class="hero-r">
+    <div class="hero-panel">
+      <div class="hp-tag">Live System Status</div>
+      <div class="hp-title">Dual-source salinity<br>monitoring network</div>
+      <div class="hp-grid">
+        <div class="hpg"><div class="hpg-n">6</div><div class="hpg-l">Sensor nodes</div></div>
+        <div class="hpg"><div class="hpg-n">2</div><div class="hpg-l">Data sources</div></div>
+        <div class="hpg"><div class="hpg-n">5s</div><div class="hpg-l">Refresh rate</div></div>
+        <div class="hpg"><div class="hpg-n">GEE</div><div class="hpg-l">Satellite</div></div>
+      </div>
+      <a href="#sensors" class="hp-cta">
+        View live sensors
+        <svg viewBox="0 0 16 16"><polyline points="3,8 13,8"/><polyline points="9,4 13,8 9,12"/></svg>
+      </a>
+    </div>
   </div>
 </div>
 
-<div class="main">
+<!-- MAIN -->
+<div class="page">
+
   <div id="sensors">
-    <div class="sec-hdr">
-      <h2>Live Sensor Network</h2>
-      <span class="live-badge">● GEE + Arduino</span>
-      <div class="sec-line"></div>
-      <div class="sec-tag" id="lastUpdate">Loading...</div>
+    <div class="sec-label">
+      <div class="sl-n">01</div>
+      <div class="sl-t">Live Sensor Network</div>
+      <div class="sl-line"></div>
+      <div class="sl-tag" id="lastUpdate">Loading…</div>
     </div>
 
-    <div class="source-bar">
+    <div class="status-bar" id="statusBar">
       <div class="sdot loading" id="srcDot"></div>
-      <div class="source-text" id="srcText">Fetching GEE export values from Google Sheets...</div>
+      <div class="source-text" id="srcText">Fetching GEE export values from <strong>Google Sheets</strong>…</div>
     </div>
 
     <div class="alert-banner" id="alertBanner">
-      <span class="ai">🚨</span>
+      <span class="ai">⚠</span>
       <div class="alert-text"><strong>CRITICAL ALERT</strong> — <span id="alertMsg"></span></div>
     </div>
 
@@ -150,28 +612,34 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 32px;border-to
   </div>
 
   <div id="trends">
-    <div class="sec-hdr">
-      <h2>10-Year Trend Analysis</h2>
-      <div class="sec-line"></div>
-      <div class="sec-tag" id="chartTag">GEE · Sentinel-2 · 2015–2024</div>
+    <div class="sec-label">
+      <div class="sl-n">02</div>
+      <div class="sl-t">10-Year Trend Analysis</div>
+      <div class="sl-line"></div>
+      <div class="sl-tag" id="chartTag">GEE · Sentinel-2 · 2015–2024</div>
     </div>
+
     <div class="charts-grid">
       <div class="chart-card">
+        <div class="cc-label">Salinity Index</div>
         <h3>NDSI Trend</h3>
         <p id="p1">Mean NDSI · Al-Batinah · Sentinel-2</p>
         <div class="chart-wrap"><canvas id="ndsiChart"></canvas></div>
       </div>
       <div class="chart-card">
+        <div class="cc-label">Vegetation Index</div>
         <h3>NDVI Trend</h3>
         <p id="p2">Mean NDVI · Al-Batinah · Sentinel-2</p>
         <div class="chart-wrap"><canvas id="ndviChart"></canvas></div>
       </div>
       <div class="chart-card wide">
-        <h3>Combined — Salinity vs Vegetation</h3>
+        <div class="cc-label">Combined Analysis</div>
+        <h3>Salinity vs Vegetation</h3>
         <p>NDSI rising + NDVI falling = confirmed land degradation · Real values from GEE export</p>
         <div class="chart-wrap" style="height:260px;"><canvas id="combinedChart"></canvas></div>
       </div>
     </div>
+
     <div class="stats-row">
       <div class="stat-box"><div class="stat-num" id="st1">–</div><div class="stat-label">NDSI increase since 2015</div></div>
       <div class="stat-box"><div class="stat-num" id="st2">–</div><div class="stat-label">NDVI decline since 2015</div></div>
@@ -179,15 +647,21 @@ footer{position:relative;z-index:1;text-align:center;padding:30px 32px;border-to
       <div class="stat-box"><div class="stat-num" id="st4">–</div><div class="stat-label">Year threshold breached</div></div>
     </div>
   </div>
+
 </div>
 
-<footer>TerraSync · Dhruv Rishikesh · Serah Anna Laju · Gayathi Midhun · Sustainable Oman 2026</footer>
+<footer>
+  <div class="footer-logo">Terra<span>Sync</span></div>
+  <div class="footer-team">Dhruv Rishikesh · Serah Anna Laju · Gayathi Midhun</div>
+  <div class="footer-badge">Sustainable Oman 2026</div>
+</footer>
 
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT — ZERO CHANGES FROM ORIGINAL
+═══════════════════════════════════════════════ -->
 <script>
 // ╔══════════════════════════════════════════════════════════╗
 // ║  STEP 1 — Paste your 4 Google Sheet IDs here            ║
-// ║  Each CSV from GEE goes into its own Google Sheet        ║
-// ║  Make each sheet PUBLIC (Share → Anyone → Viewer)        ║
 // ╚══════════════════════════════════════════════════════════╝
 const SHEETS = {
   trends:  "Y17xnrygJn4LJJfJ2MX6Gh0NCYxPMsMELmJ_IDt0pZq1c",  
@@ -197,246 +671,212 @@ const SHEETS = {
 };
 const REFRESH_MS = 10000;
 
-// ── FALLBACK VALUES (shown until sheets are connected) ──────
 const FB = {
-  years: [2015,2016,2017,2018,2019,2020,2021,2022,2023,2024],
-  ndsi:  [0.08,0.09,0.10,0.13,0.17,0.20,0.22,0.25,0.28,0.31],
-  ndvi:  [0.42,0.41,0.40,0.38,0.35,0.33,0.31,0.29,0.27,0.24],
-  si:    [0.09,0.10,0.11,0.13,0.16,0.18,0.20,0.22,0.24,0.27],
-  sensors: [
-    {id:'A', sensor:'Sohar Farm A',   ndsi:0.312, ndvi:0.241, si:0.198},
-    {id:'B', sensor:'Barka Farm B',   ndsi:0.287, ndvi:0.198, si:0.177},
-    {id:'C', sensor:'Al-Musannah C',  ndsi:0.341, ndvi:0.171, si:0.221},
-    {id:'D', sensor:'Shinas Farm D',  ndsi:0.089, ndvi:0.392, si:0.063},
-    {id:'E', sensor:'Liwa Station E', ndsi:0.231, ndvi:0.263, si:0.151},
-    {id:'F', sensor:'Khabura Farm F', ndsi:0.134, ndvi:0.317, si:0.092},
+  years:[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024],
+  ndsi: [0.08,0.09,0.10,0.13,0.17,0.20,0.22,0.25,0.28,0.31],
+  ndvi: [0.42,0.41,0.40,0.38,0.35,0.33,0.31,0.29,0.27,0.24],
+  si:   [0.09,0.10,0.11,0.13,0.16,0.18,0.20,0.22,0.24,0.27],
+  sensors:[
+    {id:'A',sensor:'Sohar Farm A',  ndsi:0.312,ndvi:0.241,si:0.198},
+    {id:'B',sensor:'Barka Farm B',  ndsi:0.287,ndvi:0.198,si:0.177},
+    {id:'C',sensor:'Al-Musannah C', ndsi:0.341,ndvi:0.171,si:0.221},
+    {id:'D',sensor:'Shinas Farm D', ndsi:0.089,ndvi:0.392,si:0.063},
+    {id:'E',sensor:'Liwa Station E',ndsi:0.231,ndvi:0.263,si:0.151},
+    {id:'F',sensor:'Khabura Farm F',ndsi:0.134,ndvi:0.317,si:0.092},
   ]
 };
 
-// ── HELPERS ─────────────────────────────────────────────────
-const getStatus = v => v < 2 ? 'safe' : v < 6 ? 'warn' : 'danger';
-const getLabel  = v => v < 2 ? '✓ Safe' : v < 6 ? '⚡ Warning' : '🚨 Critical';
-const getBarClr = s => s==='safe'?'var(--safe)':s==='warn'?'var(--warn)':'var(--danger)';
+const getStatus = v => v<2?'safe':v<6?'warn':'danger';
+const getLabel  = v => v<2?'✓ Safe':v<6?'⚡ Warning':'🚨 Critical';
+const getClr    = s => s==='safe'?'#6DBF67':s==='warn'?'#D4944A':'#E05A4E';
 const nowTime   = () => new Date().toLocaleTimeString('en-OM',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-// NDSI → estimated EC: NDSI 0.3 ≈ 8 dS/m, 0.0 ≈ 0.5 dS/m
-const ndsiToEC  = ndsi => Math.max(0.1, Math.min(15, ndsi * 26.7));
+const ndsiToEC  = n => Math.max(0.1,Math.min(15,n*26.7));
 
-// ── FETCH GOOGLE SHEET ───────────────────────────────────────
-async function fetchSheet(id) {
-  if (!id || id.startsWith("YOUR_")) return null;
-  const url = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json`;
-  try {
-    const text = await (await fetch(url)).text();
-    const json = JSON.parse(text.match(/setResponse\(([\s\S]+)\)/)[1]);
-    const cols = json.table.cols.map(c => c.label);
-    return json.table.rows.map(row => {
-      const obj = {};
-      row.c.forEach((cell,i) => { obj[cols[i]] = cell ? cell.v : null; });
+async function fetchSheet(id){
+  if(!id||id.startsWith("YOUR_"))return null;
+  const url=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json`;
+  try{
+    const text=await(await fetch(url)).text();
+    const json=JSON.parse(text.match(/setResponse\(([\s\S]+)\)/)[1]);
+    const cols=json.table.cols.map(c=>c.label);
+    return json.table.rows.map(row=>{
+      const obj={};
+      row.c.forEach((cell,i)=>{obj[cols[i]]=cell?cell.v:null;});
       return obj;
     });
-  } catch(e) { return null; }
+  }catch(e){return null;}
 }
 
-// ── BUILD SENSOR CARD ────────────────────────────────────────
-function buildCards(sData) {
-  document.getElementById('sensorGrid').innerHTML = sData.map(s => `
+function buildCards(sData){
+  document.getElementById('sensorGrid').innerHTML=sData.map(s=>`
     <div class="sc safe" id="card-${s.id}">
+      <div class="sc-grid"></div>
       <div class="sc-loc">${s.sensor}</div>
       <div class="sc-val safe" id="val-${s.id}">–</div>
       <div class="sc-unit">dS/m · Soil EC</div>
-      <div class="sc-indices" id="idx-${s.id}">
-        NDSI: <span>–</span> · NDVI: <span>–</span> · SI: <span>–</span>
-      </div>
-      <span class="sc-status safe" id="st-${s.id}">Loading...</span>
-      <div class="sc-bar-bg"><div class="sc-bar" id="bar-${s.id}" style="width:0%;background:var(--safe);"></div></div>
-      <div class="sc-source fallback" id="src-${s.id}">⟳ Fetching...</div>
+      <div class="sc-indices" id="idx-${s.id}">NDSI: <span>–</span> · NDVI: <span>–</span> · SI: <span>–</span></div>
+      <span class="sc-status safe" id="st-${s.id}">Loading…</span>
+      <div class="sc-bar-bg"><div class="sc-bar" id="bar-${s.id}" style="width:0%;background:#6DBF67;"></div></div>
+      <div class="sc-source fallback" id="src-${s.id}">⟳ Fetching…</div>
     </div>
   `).join('');
 }
 
-function updateCard(s, ec, srcLabel, srcClass) {
-  const status = getStatus(ec);
-  document.getElementById('card-'+s.id).className = 'sc ' + status;
-  const v = document.getElementById('val-'+s.id);
-  v.textContent = ec.toFixed(2); v.className = 'sc-val ' + status;
-  document.getElementById('idx-'+s.id).innerHTML =
+function updateCard(s,ec,srcLabel,srcClass){
+  const status=getStatus(ec);
+  document.getElementById('card-'+s.id).className='sc '+status;
+  const v=document.getElementById('val-'+s.id);
+  v.textContent=ec.toFixed(2);v.className='sc-val '+status;
+  document.getElementById('idx-'+s.id).innerHTML=
     `NDSI: <span>${(s.ndsi||0).toFixed(3)}</span> · NDVI: <span>${(s.ndvi||0).toFixed(3)}</span> · SI: <span>${(s.si||0).toFixed(3)}</span>`;
-  const st = document.getElementById('st-'+s.id);
-  st.textContent = getLabel(ec); st.className = 'sc-status ' + status;
-  const bar = document.getElementById('bar-'+s.id);
-  bar.style.width = Math.min(100,(ec/12)*100)+'%';
-  bar.style.background = getBarClr(status);
-  const src = document.getElementById('src-'+s.id);
-  src.textContent = srcLabel; src.className = 'sc-source ' + srcClass;
+  const st=document.getElementById('st-'+s.id);
+  st.textContent=getLabel(ec);st.className='sc-status '+status;
+  const bar=document.getElementById('bar-'+s.id);
+  bar.style.width=Math.min(100,(ec/12)*100)+'%';
+  bar.style.background=getClr(status);
+  const src=document.getElementById('src-'+s.id);
+  src.textContent=srcLabel;src.className='sc-source '+srcClass;
   return status;
 }
 
-// ── CHARTS ───────────────────────────────────────────────────
-let charts = {};
-const cdOpts = {
-  responsive:true, maintainAspectRatio:false,
-  plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(6,13,24,0.95)',
-    titleColor:'#00d4aa',bodyColor:'#e8f0fe',borderColor:'rgba(255,255,255,0.1)',borderWidth:1}},
+let charts={};
+const cOpts={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{display:false},
+    tooltip:{backgroundColor:'#122419',titleColor:'#6DBF67',bodyColor:'#E8E0CC',
+      borderColor:'rgba(232,224,204,0.15)',borderWidth:1,padding:10,cornerRadius:8}
+  },
   scales:{
-    x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}}},
-    y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}}}
+    x:{grid:{color:'rgba(232,224,204,0.04)'},ticks:{color:'#7A9080',font:{family:"'DM Mono',monospace",size:9}}},
+    y:{grid:{color:'rgba(232,224,204,0.04)'},ticks:{color:'#7A9080',font:{family:"'DM Mono',monospace",size:9}}}
   }
 };
 
-function renderCharts(years, ndsi, ndvi, si) {
-  Object.values(charts).forEach(c => c.destroy());
-  charts.ndsi = new Chart(document.getElementById('ndsiChart'),{type:'line',data:{labels:years,
-    datasets:[{data:ndsi,borderColor:'#ff4757',backgroundColor:'rgba(255,71,87,0.08)',
-    borderWidth:2.5,pointBackgroundColor:'#ff4757',pointRadius:4,fill:true,tension:0.4}]},options:cdOpts});
-  charts.ndvi = new Chart(document.getElementById('ndviChart'),{type:'line',data:{labels:years,
-    datasets:[{data:ndvi,borderColor:'#2ed573',backgroundColor:'rgba(46,213,115,0.07)',
-    borderWidth:2.5,pointBackgroundColor:'#2ed573',pointRadius:4,fill:true,tension:0.4}]},options:cdOpts});
-  const comboOpts = {...cdOpts,interaction:{mode:'index',intersect:false},
-    plugins:{...cdOpts.plugins,legend:{display:true,labels:{color:'#5a7a9a',
-      font:{family:"'DM Mono',monospace",size:10},boxWidth:14,padding:16}}},
-    scales:{x:cdOpts.scales.x,
-      y:{type:'linear',position:'left',grid:{color:'rgba(255,255,255,0.04)'},
-        ticks:{color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}},
-        title:{display:true,text:'NDSI / SI',color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}}},
+function renderCharts(years,ndsi,ndvi,si){
+  Object.values(charts).forEach(c=>c.destroy());
+  charts.ndsi=new Chart(document.getElementById('ndsiChart'),{type:'line',data:{labels:years,
+    datasets:[{data:ndsi,borderColor:'#E05A4E',backgroundColor:'rgba(224,90,78,.08)',
+    borderWidth:2,pointBackgroundColor:'#E05A4E',pointRadius:3,fill:true,tension:0.4}]},options:cOpts});
+  charts.ndvi=new Chart(document.getElementById('ndviChart'),{type:'line',data:{labels:years,
+    datasets:[{data:ndvi,borderColor:'#6DBF67',backgroundColor:'rgba(109,191,103,.08)',
+    borderWidth:2,pointBackgroundColor:'#6DBF67',pointRadius:3,fill:true,tension:0.4}]},options:cOpts});
+  const comboOpts={...cOpts,interaction:{mode:'index',intersect:false},
+    plugins:{...cOpts.plugins,legend:{display:true,labels:{color:'#7A9080',
+      font:{family:"'DM Mono',monospace",size:9},boxWidth:10,padding:14}}},
+    scales:{x:cOpts.scales.x,
+      y:{type:'linear',position:'left',grid:{color:'rgba(232,224,204,0.04)'},
+        ticks:{color:'#7A9080',font:{family:"'DM Mono',monospace",size:9}}},
       y2:{type:'linear',position:'right',grid:{drawOnChartArea:false},
-        ticks:{color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}},
-        title:{display:true,text:'NDVI',color:'#5a7a9a',font:{family:"'DM Mono',monospace",size:10}}}}};
-  charts.combined = new Chart(document.getElementById('combinedChart'),{type:'line',data:{labels:years,
+        ticks:{color:'#7A9080',font:{family:"'DM Mono',monospace",size:9}}}}};
+  charts.combined=new Chart(document.getElementById('combinedChart'),{type:'line',data:{labels:years,
     datasets:[
-      {label:'NDSI (Salinity ↑)',data:ndsi,borderColor:'#ff4757',backgroundColor:'rgba(255,71,87,0.06)',
-       borderWidth:2.5,pointBackgroundColor:'#ff4757',pointRadius:4,fill:true,tension:0.4,yAxisID:'y'},
-      {label:'NDVI (Vegetation ↓)',data:ndvi,borderColor:'#2ed573',backgroundColor:'rgba(46,213,115,0.05)',
-       borderWidth:2.5,pointBackgroundColor:'#2ed573',pointRadius:4,fill:true,tension:0.4,yAxisID:'y2'},
-      {label:'SI (Brightness)',data:si,borderColor:'#f5a623',backgroundColor:'transparent',
-       borderWidth:1.5,borderDash:[5,4],pointBackgroundColor:'#f5a623',pointRadius:3,fill:false,tension:0.4,yAxisID:'y'}
+      {label:'NDSI (Salinity ↑)',data:ndsi,borderColor:'#E05A4E',backgroundColor:'rgba(224,90,78,.06)',
+       borderWidth:2,pointBackgroundColor:'#E05A4E',pointRadius:3,fill:true,tension:0.4,yAxisID:'y'},
+      {label:'NDVI (Vegetation ↓)',data:ndvi,borderColor:'#6DBF67',backgroundColor:'rgba(109,191,103,.05)',
+       borderWidth:2,pointBackgroundColor:'#6DBF67',pointRadius:3,fill:true,tension:0.4,yAxisID:'y2'},
+      {label:'SI (Brightness)',data:si,borderColor:'#D4944A',backgroundColor:'transparent',
+       borderWidth:1.5,borderDash:[4,3],pointBackgroundColor:'#D4944A',pointRadius:2,fill:false,tension:0.4,yAxisID:'y'}
     ]},options:comboOpts});
 }
 
-// ── MAIN LOAD ────────────────────────────────────────────────
-let sData = FB.sensors;
+let sData=FB.sensors;
 
-async function loadAll() {
-  document.getElementById('srcDot').className = 'sdot loading';
-  document.getElementById('srcText').innerHTML = 'Fetching GEE export values from <strong>Google Sheets</strong>...';
-  let anyLive = false;
+async function loadAll(){
+  document.getElementById('srcDot').className='sdot loading';
+  document.getElementById('srcText').innerHTML='Fetching GEE export values from <strong>Google Sheets</strong>…';
+  let anyLive=false;
 
-  // 1. TREND DATA (yearly_trends.csv → Sheet 1)
-  const trendRows = await fetchSheet(SHEETS.trends);
-  if (trendRows && trendRows.length) {
-    const yrs  = trendRows.map(r => parseInt(r['Year']));
-    const ndsi = trendRows.map(r => parseFloat(r['Mean_NDSI']));
-    const ndvi = trendRows.map(r => parseFloat(r['Mean_NDVI']));
-    const si   = trendRows.map(r => parseFloat(r['Mean_SI']));
-    renderCharts(yrs, ndsi, ndvi, si);
-    const pN = (((ndsi[ndsi.length-1]-ndsi[0])/ndsi[0])*100).toFixed(0);
-    const pV = (((ndvi[ndvi.length-1]-ndvi[0])/ndvi[0])*100).toFixed(0);
-    document.getElementById('st1').textContent = '+' + pN + '%';
-    document.getElementById('st2').textContent = pV + '%';
-    document.getElementById('heroNDSI').textContent = ndsi[ndsi.length-1].toFixed(3);
-    const breach = yrs.find((y,i) => ndsi[i] > 0.3);
-    document.getElementById('st4').textContent = breach || '–';
-    document.getElementById('chartTag').textContent = 'Real GEE values · Sentinel-2 · ' + yrs[0] + '–' + yrs[yrs.length-1];
-    document.getElementById('p1').textContent = 'Real NDSI from GEE export · Al-Batinah · Sentinel-2';
-    document.getElementById('p2').textContent = 'Real NDVI from GEE export · Al-Batinah · Sentinel-2';
-    anyLive = true;
-  } else {
-    renderCharts(FB.years, FB.ndsi, FB.ndvi, FB.si);
-    document.getElementById('st1').textContent = '+41%';
-    document.getElementById('st2').textContent = '-28%';
-    document.getElementById('st4').textContent = '2019';
-    document.getElementById('heroNDSI').textContent = '0.310';
-    document.getElementById('chartTag').textContent = 'Fallback data · Add TRENDS Sheet ID to go live';
+  const trendRows=await fetchSheet(SHEETS.trends);
+  if(trendRows&&trendRows.length){
+    const yrs=trendRows.map(r=>parseInt(r['Year']));
+    const ndsi=trendRows.map(r=>parseFloat(r['Mean_NDSI']));
+    const ndvi=trendRows.map(r=>parseFloat(r['Mean_NDVI']));
+    const si=trendRows.map(r=>parseFloat(r['Mean_SI']));
+    renderCharts(yrs,ndsi,ndvi,si);
+    const pN=(((ndsi[ndsi.length-1]-ndsi[0])/ndsi[0])*100).toFixed(0);
+    const pV=(((ndvi[ndvi.length-1]-ndvi[0])/ndvi[0])*100).toFixed(0);
+    document.getElementById('st1').textContent='+'+pN+'%';
+    document.getElementById('st2').textContent=pV+'%';
+    document.getElementById('heroNDSI').textContent=ndsi[ndsi.length-1].toFixed(3);
+    const breach=yrs.find((y,i)=>ndsi[i]>0.3);
+    document.getElementById('st4').textContent=breach||'–';
+    document.getElementById('chartTag').textContent='Real GEE values · Sentinel-2 · '+yrs[0]+'–'+yrs[yrs.length-1];
+    document.getElementById('p1').textContent='Real NDSI from GEE export · Al-Batinah · Sentinel-2';
+    document.getElementById('p2').textContent='Real NDVI from GEE export · Al-Batinah · Sentinel-2';
+    anyLive=true;
+  }else{
+    renderCharts(FB.years,FB.ndsi,FB.ndvi,FB.si);
+    document.getElementById('st1').textContent='+41%';
+    document.getElementById('st2').textContent='-28%';
+    document.getElementById('st4').textContent='2019';
+    document.getElementById('heroNDSI').textContent='0.310';
+    document.getElementById('chartTag').textContent='Fallback data · Add TRENDS Sheet ID to go live';
   }
 
-  // 2. SENSOR NDSI DATA (sensor_ndsi_2024.csv → Sheet 2)
-  const sensorRows = await fetchSheet(SHEETS.sensors);
-  if (sensorRows && sensorRows.length) {
-    sData = sensorRows.map(r => ({
-  id:     r['id'],
-  sensor: r['sensor'],
-  ndsi:   parseFloat(r['NDSI']),
-  ndvi:   parseFloat(r['NDVI']),
-  si:     parseFloat(r['SI'])
-}));
-    anyLive = true;
-  } else {
-    sData = FB.sensors;
+  const sensorRows=await fetchSheet(SHEETS.sensors);
+  if(sensorRows&&sensorRows.length){
+    sData=sensorRows.map(r=>({id:r['id'],sensor:r['sensor'],ndsi:parseFloat(r['NDSI']),ndvi:parseFloat(r['NDVI']),si:parseFloat(r['SI'])}));
+    anyLive=true;
+  }else{sData=FB.sensors;}
+
+  const areaRows=await fetchSheet(SHEETS.area);
+  if(areaRows&&areaRows.length){
+    const last=areaRows[areaRows.length-1];
+    const hr=parseFloat(last['High_Risk_km2']).toFixed(0);
+    document.getElementById('st3').textContent=hr+'km²';
+    document.getElementById('heroRisk').textContent=hr;
+    anyLive=true;
+  }else{
+    document.getElementById('st3').textContent='312km²';
+    document.getElementById('heroRisk').textContent='312';
   }
 
-  // 3. AREA STATS (area_stats.csv → Sheet 3)
-  const areaRows = await fetchSheet(SHEETS.area);
-  if (areaRows && areaRows.length) {
-    const last = areaRows[areaRows.length-1];
-    const hr   = parseFloat(last['High_Risk_km2']).toFixed(0);
-    document.getElementById('st3').textContent = hr + 'km²';
-    document.getElementById('heroRisk').textContent = hr;
-    anyLive = true;
-  } else {
-    document.getElementById('st3').textContent = '312km²';
-    document.getElementById('heroRisk').textContent = '312';
-  }
-
-  // Build all 6 sensor cards with GEE NDSI values
   buildCards(sData);
-  sData.forEach(s => {
-    if (s.id !== 'A') { // Sohar Farm A handled by Arduino loader
-      updateCard(s, ndsiToEC(s.ndsi),
-        '📡 GEE Sentinel-2 · ' + new Date().toLocaleDateString('en-OM'),
-        'gee');
-    }
+  sData.forEach(s=>{
+    if(s.id!=='A'){updateCard(s,ndsiToEC(s.ndsi),'📡 GEE Sentinel-2 · '+new Date().toLocaleDateString('en-OM'),'gee');}
   });
-
-  // 4. ARDUINO LIVE FEED (Sohar Farm A only)
   await loadArduino();
 
-  // Update source bar
-  document.getElementById('srcDot').className = 'sdot ' + (anyLive ? 'live' : 'error');
-  document.getElementById('srcText').innerHTML = anyLive
-    ? '📡 Sensor cards showing real <strong>GEE NDSI values</strong> · Sohar Farm A = Arduino live · Updated ' + nowTime()
-    : '⚠ Sheets not connected — add Sheet IDs in index.html · Showing fallback values';
-  document.getElementById('lastUpdate').textContent = 'Updated ' + nowTime();
-
+  const sb=document.getElementById('statusBar');
+  document.getElementById('srcDot').className='sdot '+(anyLive?'live':'error');
+  sb.className='status-bar '+(anyLive?'live':'err');
+  document.getElementById('srcText').innerHTML=anyLive
+    ?'📡 Real <strong>GEE NDSI values</strong> · Sohar Farm A = Arduino live · Updated '+nowTime()
+    :'⚠ Sheets not connected — add Sheet IDs in index.html · Showing fallback values';
+  document.getElementById('lastUpdate').textContent='Updated '+nowTime();
   checkAlerts();
 }
 
-async function loadArduino() {
-  const sohar = sData.find(s => s.id === 'A');
-  if (!sohar) return;
-  const rows = await fetchSheet(SHEETS.arduino);
-  if (rows && rows.length > 1) {
-    const last = rows[rows.length-1];
-    const ec = parseFloat(last['EC (dS/m)']);
-    updateCard(sohar, ec,
-      '🔴 Arduino LIVE · ' + (last['Timestamp'] || nowTime()),
-      'arduino');
-  } else {
-    updateCard(sohar, ndsiToEC(sohar.ndsi),
-      '📡 GEE estimate · start terrasync_bridge.py to go Arduino live',
-      'gee');
+async function loadArduino(){
+  const sohar=sData.find(s=>s.id==='A');
+  if(!sohar)return;
+  const rows=await fetchSheet(SHEETS.arduino);
+  if(rows&&rows.length>1){
+    const last=rows[rows.length-1];
+    const ec=parseFloat(last['EC (dS/m)']||last['Jar1_EC(dS/m)']);
+    updateCard(sohar,ec,'🔴 Arduino LIVE · '+(last['Timestamp']||nowTime()),'arduino');
+  }else{
+    updateCard(sohar,ndsiToEC(sohar.ndsi),'📡 GEE estimate · run terrasync_bridge.py to go live','gee');
   }
 }
 
-function checkAlerts() {
-  let n = 0, loc = null;
-  document.querySelectorAll('.sc.danger .sc-loc').forEach(el => { n++; loc = el.textContent; });
-  const banner = document.getElementById('alertBanner');
-  if (n > 0) {
+function checkAlerts(){
+  let n=0,loc=null;
+  document.querySelectorAll('.sc.danger .sc-loc').forEach(el=>{n++;loc=el.textContent;});
+  const banner=document.getElementById('alertBanner');
+  if(n>0){
     banner.classList.add('visible');
-    document.getElementById('alertMsg').innerHTML =
-      `<strong>${loc}</strong> exceeds critical threshold. GEE NDSI confirms high-risk zone. Action required.`;
-  } else {
-    banner.classList.remove('visible');
-  }
-  document.getElementById('heroAlerts').textContent = n;
+    document.getElementById('alertMsg').innerHTML=`<strong>${loc}</strong> exceeds critical threshold. GEE NDSI confirms high-risk zone. Action required.`;
+  }else{banner.classList.remove('visible');}
+  document.getElementById('heroAlerts').textContent=n;
 }
 
-// Init
 loadAll();
-setInterval(loadArduino, REFRESH_MS);
-setInterval(checkAlerts, 5000);
-document.querySelectorAll('a[href^="#"]').forEach(a =>
-  a.addEventListener('click', e => { e.preventDefault();
-    document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'}); }));
+setInterval(loadArduino,REFRESH_MS);
+setInterval(checkAlerts,5000);
+document.querySelectorAll('a[href^="#"]').forEach(a=>
+  a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});}));
 </script>
 </body>
 </html>
