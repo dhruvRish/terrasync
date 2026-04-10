@@ -660,9 +660,6 @@ footer {
      JAVASCRIPT — ZERO CHANGES FROM ORIGINAL
 ═══════════════════════════════════════════════ -->
 <script>
-// ╔══════════════════════════════════════════════════════════╗
-// ║  STEP 1 — Paste your 4 Google Sheet IDs here            ║
-// ╚══════════════════════════════════════════════════════════╝
 const SHEETS = {
   trends:  "Y17xnrygJn4LJJfJ2MX6Gh0NCYxPMsMELmJ_IDt0pZq1c",  
   sensors: "1_kQit_uabSgBh1-DprBjI8W6HmnZCe5KSHDNFdc9Kaw",   
@@ -849,15 +846,34 @@ async function loadAll(){
 }
 
 async function loadArduino(){
-  const sohar=sData.find(s=>s.id==='A');
-  if(!sohar)return;
-  const rows=await fetchSheet(SHEETS.arduino);
-  if(rows&&rows.length>1){
-    const last=rows[rows.length-1];
-    const ec=parseFloat(last['EC (dS/m)']||last['Jar1_EC(dS/m)']);
-    updateCard(sohar,ec,'🔴 Arduino LIVE · '+(last['Timestamp']||nowTime()),'arduino');
-  }else{
-    updateCard(sohar,ndsiToEC(sohar.ndsi),'📡 GEE estimate · run terrasync_bridge.py to go live','gee');
+  const sohar = sData.find(s=>s.id==='A');  // Jar 1 → Sohar Farm A
+  const barka = sData.find(s=>s.id==='B');  // Jar 2 → Barka Farm B
+  const rows  = await fetchSheet(SHEETS.arduino);
+
+  if(rows && rows.length > 1){
+    const last = rows[rows.length-1];
+
+    // Jar 1 → Sohar Farm A
+    if(sohar){
+      const ec1 = parseFloat(last['Jar1_EC(dS/m)']) || 0;
+      updateCard(sohar, ec1,
+        '🔴 Arduino LIVE · Jar 1 · '+(last['Timestamp']||nowTime()),
+        'arduino');
+    }
+
+    // Jar 2 → Barka Farm B
+    if(barka){
+      const ec2 = parseFloat(last['Jar2_EC(dS/m)']) || 0;
+      updateCard(barka, ec2,
+        '🔴 Arduino LIVE · Jar 2 · '+(last['Timestamp']||nowTime()),
+        'arduino');
+    }
+  } else {
+    // Fallback to GEE estimates
+    if(sohar) updateCard(sohar, ndsiToEC(sohar.ndsi),
+      '📡 GEE estimate · run bridge to go live','gee');
+    if(barka) updateCard(barka, ndsiToEC(barka.ndsi),
+      '📡 GEE estimate · run bridge to go live','gee');
   }
 }
 
