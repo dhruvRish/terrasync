@@ -855,7 +855,7 @@ async function loadArduino(){
 
     // Jar 1 → Sohar Farm A
     if(sohar){
-      const ec1 = parseFloat(last['Jar1_EC(dS/m)']) || 0;
+      const ec1 = parseFloat(last['EC (dS/m)']) || 0;
       updateCard(sohar, ec1,
         '🔴 Arduino LIVE · Jar 1 · '+(last['Timestamp']||nowTime()),
         'arduino');
